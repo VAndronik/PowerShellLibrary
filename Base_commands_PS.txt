@@ -1,0 +1,87 @@
+# PowerShell Remoting позволяет удаленно подключаться к PowerShell сессиям на компьютерах 
+# через службу WinRM (Windows Remote Management) через протокол Web Services for 
+# Management (WS-Management)
+
+# Для связи между компьютерами в PowerShell Remoting используется протокол HTTP 
+# (порт TCP/5985) или HTTPS (порт TCP/5986). По умолчанию используется протокол HTTP, 
+# но даже этот трафик шифруется с помощью ключа AES-256 (впрочем, есть угроза атак 
+# man-in-the middle). Возможна аутентификация через Kerberos (в домене) или NTLM.
+
+# На удаленных компьютерах, к которым вы планируете подключаться должен быть 
+# запущена служба WinRM (Служба удаленного управления Windows (WS-Management)). 
+# Проверить это можно так:
+
+Get-Service -Name "*WinRM*" | fl
+
+# Если служба не запущена, запустите ее:
+
+Enable-PSRemoting
+
+# Данная команда запустит службу WinRM (установит автоматический запуск), 
+# выставит настройки winrm по-умолчанию и добавит исключение в Windows Firewall. 
+# Команда Enable-PSRemoting –Force включает WinRM без запроса пользователя.
+
+
+# Обратите внимание, что PowerShell Remoting по-умолчанию не работает, если тип вашей 
+# сети определен как общедоступная (Public). В этом случае команда вернет ошибку:
+Set-WSManQuickConfig : ...
+
+# Вам нужно изменить тип сети на частную (private), или использовать команду:
+Enable-PSRemoting –SkipNetworkProfileCheck
+
+# Также нужно включить правило Window Defender Firewall, которое разрешает доступ к WinRM в общедоступных сетях. Вы можете включить правило брандмауэра с помощью GPO или PowerShell:
+Set-NetFirewallRule -Name 'WINRM-HTTP-In-TCP' -RemoteAddress Any
+
+# Чтобы проверить подключение к удаленному компьютеру через PowerShell Remoting 
+# используется команда:
+
+Test-WsMan compname1
+
+# Удаленное выполнение PowerShell с помощью Invoke-Command
+
+# выведет в вашу консоль значение версии PowerShell на ПК test:
+Invoke-Command -ComputerName test -ScriptBlock {$PSVersionTable.PSVersion}
+
+# По-умолчанию команда, посланная через Invoke-Command выполняется на удалённом 
+# компьютере от текущего пользователя. Если нужно выполнить команду от имени другого 
+# пользователя, сначала нужно запросить учетные данные пользователя и сохранить их в 
+# переменную:
+
+$cred = Get-Credential
+Invoke-Command -ComputerName comp-buh2 -Credential $cred -ScriptBlock {Get-NetAdapter}
+
+# Если нужно выполнить команду от имени другого пользователя, сначала нужно запросить 
+# учетные данные пользователя и сохранить их в переменную:
+$cred = Get-Credential
+
+# И потом использовать в команде. Эта PowerShell команда выведет список сетевых 
+# интерфейсов на удаленном компьютере:
+Invoke-Command -ComputerName comp-buh2 -Credential $cred -ScriptBlock {Get-NetAdapter}
+
+
+# Invoke-Command позволяет выполнять не только отдельные команды, но и запускать 
+# скрипты PowerShell. Для этого используется аргумент -FilePath (вместо –ScriptBlock). 
+# При этом вы указываете путь к локальному PS1 файлу скрипта на вашем компьютере 
+# (вам не нужно копировать файл скрипт на удаленный компьютер):
+Invoke-Command -ComputerName Server01 -FilePath c:\PS\Scripts\GetComputerInfo.ps1
+
+# ================Daily Commands================================
+
+# cheking connect to WS
+Test-WsMan ws-test
+
+
+Invoke-Command -ComputerName test -ScriptBlock {Get-LocalGroup}
+Invoke-Command -ComputerName test -ScriptBlock {Get-LocalGroupMember  -Group 'Администраторы'}
+Invoke-Command -ComputerName test -ScriptBlock {Get-LocalUser}
+
+Add-LocalGroupMember -Group 'Администраторы' -Member ('master') –Verbose
+
+Invoke-Command -ComputerName test -ScriptBlock {Add-LocalGroupMember -Group 'Администраторы' -Member ('master') –Verbose}
+Invoke-Command -ComputerName ws-redkov -ScriptBlock {Add-LocalGroupMember -Group 'Администраторы' -Member ('master') –Verbose}
+Invoke-Command -ComputerName ws-mironova -ScriptBlock {Add-LocalGroupMember -Group 'Администраторы' -Member ('master') –Verbose}
+
+Invoke-Command -ComputerName ws-redkov -ScriptBlock {Get-LocalGroupMember  -Group 'Администраторы' –Verbose}
+Invoke-Command -ComputerName ws-mironova -ScriptBlock {Get-LocalGroupMember  -Group 'Администраторы' –Verbose}
+
+
