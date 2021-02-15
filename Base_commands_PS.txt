@@ -84,4 +84,13 @@ Invoke-Command -ComputerName ws-mironova -ScriptBlock {Add-LocalGroupMember -Gro
 Invoke-Command -ComputerName ws-redkov -ScriptBlock {Get-LocalGroupMember  -Group 'Администраторы' –Verbose}
 Invoke-Command -ComputerName ws-mironova -ScriptBlock {Get-LocalGroupMember  -Group 'Администраторы' –Verbose}
 
+#https://winitpro.ru/index.php/2018/02/20/upravlenie-gruppami-ad-s-pomoshhyu-powershell/
+New-ADGroup – создаем новую группу AD
+Add-AdGroupMember – добавить пользователей в группу AD
+Remove-ADGroupMember – удалить пользователей из группы
+Get-ADGroup – получить информацию о группе AD
+Get-ADGroupMember – вывести список пользователей группы AD
+
+
+
 
